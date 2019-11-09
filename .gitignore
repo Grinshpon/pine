@@ -1,0 +1,5 @@
+.stack-work/
+pine.cabal
+*~
+*.swp
+*.xcf
