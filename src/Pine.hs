@@ -1,9 +1,19 @@
 module Pine
-  ( run
-  , Pine.Internal.pine
+  ( runDefault
+  , pine
+  , Drawable
+  , draw
+  , Stateful
+  , initial
+  , update
+  , Image
+  , imageSrc
+  , newImage
+  , Canvas
+  , fromImage
   ) where
 
 import Pine.Internal
 
-run :: IO ()
-run = defaultApp
+runDefault :: IO ()
+runDefault = defaultApp
