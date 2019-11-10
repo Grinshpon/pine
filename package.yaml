@@ -3,16 +3,16 @@ version:             0.1.0.0
 github:              "githubuser/pine"
 license:             Zlib
 author:              "Daniel Grinshpon"
-maintainer:          "example@example.com"
-copyright:           "2019 Author name here"
+maintainer:          "GrinshponDaniel@protonmail.com"
+copyright:           "2019 Daniel Grinshpon"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
 
 # Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
+synopsis: Functional Reactive 2D Game Framework
+category:            Game
 
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
@@ -29,11 +29,13 @@ dependencies:
 
 library:
   source-dirs: src
+  other-modules: []
 
 executables:
   pine-exe:
     main:                Main.hs
     source-dirs:         app
+    other-modules: []
     ghc-options:
     - -threaded
     - -rtsopts
@@ -45,6 +47,7 @@ tests:
   pine-test:
     main:                Spec.hs
     source-dirs:         test
+    other-modules: []
     ghc-options:
     - -threaded
     - -rtsopts
