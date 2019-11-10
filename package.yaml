@@ -25,6 +25,7 @@ dependencies:
 - sdl2-image
 - containers
 - text
+- stm
 
 library:
   source-dirs: src

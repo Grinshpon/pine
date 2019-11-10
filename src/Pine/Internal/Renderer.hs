@@ -10,11 +10,13 @@ import Pine.Internal.Types
 
 import SDL
 import SDL.Image
+import Control.Concurrent.STM
 
 import Data.Text (Text)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Control.Monad
+import Data.Word (Word32)
 
 type TextureCache = Map FilePath Texture
 
@@ -32,19 +34,30 @@ pine title windowConfig state_ = do
     }
   let
     appLoop :: TextureCache -> IO ()
-    appLoop cache = pollEvent >>= go cache (update state_)
+    appLoop cache = do
+      updateQueue <- newTChanIO
+      timer <- addTimer 16 (fpsTimer updateQueue) 
+      pollEvent >>= go updateQueue cache (update state_)
+      _ <- removeTimer timer
+      pure ()
 
-    go :: (Stateful s, Drawable s) => TextureCache -> s -> Maybe Event -> IO ()
-    go cache state mevent = do
+    go :: (Stateful s, Drawable s) => TChan () -> TextureCache -> s -> Maybe Event -> IO ()
+    go updateQueue cache state mevent = do
+      atomically $ readTChan updateQueue -- not ideal, events could get backed up
       cache' <- drawCanvas cache $ draw state
       case mevent of
-        Nothing -> pollEvent >>= go cache' (update state)
+        Nothing -> pollEvent >>= go updateQueue cache' (update state)
         Just ev -> case eventPayload ev of
           KeyboardEvent keyboardEvent
             |  keyboardEventKeyMotion keyboardEvent == Pressed &&
                keysymKeycode (keyboardEventKeysym keyboardEvent) == KeycodeQ
             -> pure ()
-          _ -> pollEvent >>= go cache' (update state)
+          _ -> pollEvent >>= go updateQueue cache' (update state)
+
+    fpsTimer :: TChan () -> Word32 -> IO RetriggerTimer
+    fpsTimer updateQueue _ = do
+      atomically $ writeTChan updateQueue ()
+      pure $ Reschedule 16
 
     drawCanvas :: TextureCache -> Canvas -> IO TextureCache
     drawCanvas cache canvas = do
@@ -82,7 +95,6 @@ instance Stateful DefaultState where
 
 instance Drawable DefaultState where
   draw (Logo img) = fromImage img
-
 
 defaultApp :: IO ()
 defaultApp = pine "Default App" defaultConfig (initial :: DefaultState)
