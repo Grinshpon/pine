@@ -9,4 +9,4 @@ Inspired by [CodeWorld](https://github.com/google/codeworld) and [Elm](https://e
 
 <br>
 
-Currently a Work In Progress, but technically functional. Documentation is currently nonexistant and that is something I'm working on, as well as everything else
+Currently a Work In Progress, but technically functional. Documentation is currently minimal and that is something I'm working on, as well as everything else
