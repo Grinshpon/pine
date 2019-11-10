@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
+
+-- | Nothing here is complete. This module is extremely WIP
 module Pine.Internal.Keyboard
-  ( keyboardState
+  ( --keyboardState
   ) where
 
 import qualified SDL

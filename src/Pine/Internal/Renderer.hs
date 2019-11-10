@@ -20,6 +20,7 @@ import Data.Word (Word32)
 
 type TextureCache = Map FilePath SDL.Texture
 
+-- | This function initializes the window and takes an initial `Stateful` object that will be updated.
 pine :: (Stateful s, Drawable s)
      => Text
      -> SDL.WindowConfig
@@ -96,6 +97,7 @@ instance Stateful DefaultState where
 instance Drawable DefaultState where
   draw (Logo img) = fromImage img
 
+-- | This simply opens a window with the Pine logo displayed
 defaultApp :: IO ()
 defaultApp = pine "Pine" defaultConfig (initial :: DefaultState)
   where
