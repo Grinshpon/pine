@@ -1,15 +1,17 @@
 module Pine.Internal.Types where
 
-import SDL
+--import SDL
 
 import Data.Semigroup
+
+data Event = DeltaTime Double | KeyPress | KeyRelease | KeyState deriving (Eq, Show) --placeholder
 
 class Drawable d where
   draw :: d -> Canvas --Foldable f => d -> f Image
 
 class Stateful s where
   initial :: s
-  update  :: s -> s
+  update  :: Event -> s -> s -- Event -> s -> s
 
 newtype Image = Image
   { imageSrc :: FilePath

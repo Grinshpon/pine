@@ -1,16 +1,14 @@
+
 module Pine
   ( runDefault
   , pine
-  , Drawable
-  , draw
-  , Stateful
-  , initial
-  , update
-  , Image
-  , imageSrc
+  , Drawable(..)
+  , Stateful(..)
+  , Image(..)
   , newImage
   , Canvas
   , fromImage
+  , Event(..)
   ) where
 
 import Pine.Internal
