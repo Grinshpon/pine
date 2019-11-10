@@ -51,12 +51,8 @@ pine title windowConfig state_ = do
       case mevent of
         Nothing -> SDL.pollEvent >>= go time' updateQueue cache' (update (DeltaTime dt) state)
         Just ev -> case SDL.eventPayload ev of
-          SDL.KeyboardEvent keyboardEvent
-            |  SDL.keyboardEventKeyMotion keyboardEvent == SDL.Pressed &&
-               SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent) == SDL.KeycodeQ
-            -> pure ()
           SDL.WindowClosedEvent _ -> pure ()
-          _ -> SDL.pollEvent >>= go time' updateQueue cache' (update (DeltaTime dt) state)
+          _ -> SDL.pollEvent >>= go time' updateQueue cache' (update (SDLEvent ev) state)
 
     fpsTimer :: TChan () -> Word32 -> IO SDL.RetriggerTimer
     fpsTimer updateQueue _ = do

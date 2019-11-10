@@ -1,10 +1,11 @@
 module Pine.Internal.Types where
 
---import SDL
+import qualified SDL (Event)
 
 import Data.Semigroup
 
-data Event = DeltaTime Double | KeyPress | KeyRelease | KeyState deriving (Eq, Show) --placeholder
+-- DeltaTime Double | KeyPress | KeyRelease | KeyState deriving (Eq, Show) --ideas
+data Event = DeltaTime Double | SDLEvent SDL.Event deriving (Eq, Show) --placeholder
 
 class Drawable d where
   draw :: d -> Canvas --Foldable f => d -> f Image
