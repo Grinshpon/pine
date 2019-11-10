@@ -107,7 +107,7 @@ defaultApp = pine "Default App" defaultConfig (initial :: DefaultState)
       , windowOpenGL        = Nothing
       , windowPosition      = Wherever
       , windowResizable     = True
-      , windowInitialSize   = V2 800 600
+      , windowInitialSize   = V2 800 800
       , windowVisible       = True
       }
 
