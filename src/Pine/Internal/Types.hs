@@ -22,9 +22,9 @@ class Stateful s where
 
 -- | An Image which is converted into a `Texture`
 data Image = Image
-  { imageSrc  :: FilePath
-  , imageQuad :: Maybe (SDL.Rectangle CInt)
-  , imageSize :: Maybe (SDL.Rectangle CInt)
+  { imageSrc  :: FilePath -- ^ source file
+  , imageQuad :: Maybe (SDL.Rectangle CInt) -- ^ quad, or Nothing for entire image
+  , imageRect :: Maybe (SDL.Rectangle CInt) -- ^ location and dimensions, or Nothing to fit entire window
   } deriving (Eq, Show) -- put in other info later (like dimensions, quads, etc)
 
 -- | Construct a rectangle

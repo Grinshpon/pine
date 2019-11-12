@@ -86,7 +86,7 @@ pine title windowConfig state_ = do
               SDL.copy renderer tex Nothing Nothing
               loadMedia (M.insert (imageSrc img) tex cache) imgs
             Just tex -> do
-              SDL.copy renderer tex (imageQuad img) (imageSize img)
+              SDL.copy renderer tex (imageQuad img) (imageRect img)
               loadMedia cache imgs
         _ -> loadMedia cache imgs
 
