@@ -45,34 +45,35 @@ pine title windowConfig state_ = do
 
     go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> Maybe SDL.Event -> IO ()
     go time updateQueue cache state mevent = do
-      time' <- SDL.ticks
-      let dt = fromIntegral (time' - time) :: Double
       atomically $ readTChan updateQueue -- not ideal, events could get backed up
-      cache' <- drawCanvas cache $ draw state
+      time' <- SDL.ticks
+      let dt = (fromIntegral (time' - time) :: Double) / 1000
+      --print $ 1/dt
+      cache' <- drawScene cache $ draw state
       case mevent of
         Nothing -> SDL.pollEvent >>= go time' updateQueue cache' (update (DeltaTime dt) state)
         Just ev -> case SDL.eventPayload ev of
           SDL.WindowClosedEvent _ -> pure ()
-          _ -> SDL.pollEvent >>= go time' updateQueue cache' (update (SDLEvent ev) state)
+          _ -> SDL.pollEvent >>= go time' updateQueue cache' (update (SDLEvent ev) $ update (DeltaTime dt) state)
 
     fpsTimer :: TChan () -> Word32 -> IO SDL.RetriggerTimer
     fpsTimer updateQueue _ = do
       atomically $ writeTChan updateQueue ()
       pure $ SDL.Reschedule 16
 
-    drawCanvas :: TextureCache -> Canvas -> IO TextureCache
-    drawCanvas cache canvas = do
+    drawScene :: TextureCache -> Scene -> IO TextureCache
+    drawScene cache canvas = do
       SDL.clear renderer
-      cache' <- drawCanvas' cache canvas
+      cache' <- drawScene' cache canvas
       SDL.present renderer
       pure cache'
 
-    drawCanvas' :: TextureCache -> Canvas -> IO TextureCache
-    drawCanvas' cache canvas = do
+    drawScene' :: TextureCache -> Scene -> IO TextureCache
+    drawScene' cache canvas = do
       case canvas of
         SingleImage img -> drawImages cache [img]
         Images imgs -> drawImages cache imgs
-        EmptyCanvas -> pure cache
+        EmptyScene -> pure cache
 
     drawImages :: TextureCache -> [Image] -> IO TextureCache
     drawImages cache [] = pure cache

@@ -9,9 +9,9 @@ import Data.Semigroup
 data Event = DeltaTime Double | SDLEvent SDL.Event deriving (Eq, Show)
 
 
--- | Drawable class contains the draw function, which takes a type and converts it into a `Canvas`
+-- | Drawable class contains the draw function, which takes a type and converts it into a `Scene`
 class Drawable d where
-  draw :: d -> Canvas --Foldable f => d -> f Image
+  draw :: d -> Scene
 
 -- | Stateful class contains initial and update functions. Any objects in your game, including the overrall world, will update according to events that occur
 class Stateful s where
@@ -29,21 +29,23 @@ newImage :: FilePath -> Image
 newImage = Image
 
 
--- | A Canvas can be empty, a single `Image`, or a group of `Image`s. (WIP: Later text and other stuff will be added)
-data Canvas = EmptyCanvas | SingleImage Image | Images [Image] deriving (Eq, Show)
+data Media = MImage Image | MAudio | MText deriving (Eq, Show) -- WIP (TODO: replace instances of Image in Scene with Media
 
-instance Semigroup Canvas where
+-- | A Scene can be empty, a single `Image`, or a group of `Image`s. (WIP: Later text and other stuff will be added)
+data Scene = EmptyScene | SingleImage Image | Images [Image] deriving (Eq, Show)
+
+instance Semigroup Scene where
   (<>) (SingleImage img1) (SingleImage img2) = Images [img1,img2]
   (<>) (Images imgs1) (Images imgs2) = Images $ imgs1 <> imgs2
   (<>) (SingleImage img) (Images imgs) = Images $ img:imgs
   (<>) (Images imgs) (SingleImage img) = Images $ imgs <> [img]
-  (<>) EmptyCanvas c = c
-  (<>) c EmptyCanvas = c
+  (<>) EmptyScene c = c
+  (<>) c EmptyScene = c
 
-instance Monoid Canvas where
-  mempty = EmptyCanvas
+instance Monoid Scene where
+  mempty = EmptyScene
   mappend = (<>)
 
--- | Convert a single `Image` into a `Canvas`
-fromImage :: Image -> Canvas
+-- | Convert a single `Image` into a `Scene`
+fromImage :: Image -> Scene
 fromImage = SingleImage

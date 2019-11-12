@@ -7,7 +7,7 @@ module Pine
   , Stateful(..)
   , Image(..)
   , newImage
-  , Canvas
+  , Scene
   , fromImage
   , Event(..)
   ) where
