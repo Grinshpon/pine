@@ -3,3 +3,4 @@ pine.cabal
 *~
 *.swp
 *.xcf
+stack-haddock-upload.sh

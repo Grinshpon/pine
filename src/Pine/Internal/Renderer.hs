@@ -22,9 +22,9 @@ type TextureCache = Map FilePath SDL.Texture
 
 -- | This function initializes the window and takes an initial `Stateful` object that will be updated.
 pine :: (Stateful s, Drawable s)
-     => Text
-     -> SDL.WindowConfig
-     -> s
+     => Text -- ^ Title
+     -> SDL.WindowConfig -- ^ Window configuration
+     -> s -- ^ Initial state
      -> IO ()
 pine title windowConfig state_ = do
   SDL.initializeAll
@@ -71,28 +71,38 @@ pine title windowConfig state_ = do
     drawScene' :: TextureCache -> Scene -> IO TextureCache
     drawScene' cache canvas = do
       case canvas of
-        SingleImage img -> drawImages cache [img]
-        Images imgs -> drawImages cache imgs
+        SingleScene m -> loadMedia cache [m]
+        MultiScene ms -> loadMedia cache ms
         EmptyScene -> pure cache
 
-    drawImages :: TextureCache -> [Image] -> IO TextureCache
-    drawImages cache [] = pure cache
-    drawImages cache (img:imgs) =
-      case cache M.!? (imageSrc img) of
-        Nothing -> do
-          tex <- SDLI.loadTexture renderer (imageSrc img)
-          SDL.copy renderer tex Nothing Nothing
-          drawImages (M.insert (imageSrc img) tex cache) imgs
-        Just tex -> do
-          SDL.copy renderer tex Nothing Nothing
-          drawImages cache imgs
+    loadMedia :: TextureCache -> [Media] -> IO TextureCache
+    loadMedia cache [] = pure cache
+    loadMedia cache (m:imgs) =
+      case m of
+        MImage img ->
+          case cache M.!? (imageSrc img) of
+            Nothing -> do
+              tex <- SDLI.loadTexture renderer (imageSrc img)
+              SDL.copy renderer tex Nothing Nothing
+              loadMedia (M.insert (imageSrc img) tex cache) imgs
+            Just tex -> do
+              SDL.copy renderer tex (imageQuad img) (imageSize img)
+              loadMedia cache imgs
+        _ -> loadMedia cache imgs
 
    in appLoop mempty
+
+{-
+quit :: Stateful a => a
+quit = unsafePerformIO $ exit *> pure initial
+
+or have a quit :: s defined in Stateful class, so wen state == quit then main loop can exit
+-}
 
 data DefaultState = Logo Image
 
 instance Stateful DefaultState where
-  initial = Logo $ newImage "src/Media/logo.png"
+  initial = Logo $ newImage "src/Media/logo.png" Nothing (Just $ rect 200 200 400 400)
   update = const id
 
 instance Drawable DefaultState where

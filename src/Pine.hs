@@ -7,6 +7,7 @@ module Pine
   , Stateful(..)
   , Image(..)
   , newImage
+  , rect
   , Scene
   , fromImage
   , Event(..)
