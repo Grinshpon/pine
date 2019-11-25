@@ -73,7 +73,7 @@ pine title windowConfig state_ = do
       case canvas of
         SingleScene m -> loadMedia cache [m]
         MultiScene ms -> loadMedia cache ms
-        EmptyScene -> pure cache
+        EmptyScene    -> pure cache
 
     loadMedia :: TextureCache -> [Media] -> IO TextureCache
     loadMedia cache [] = pure cache
