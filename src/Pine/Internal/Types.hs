@@ -30,6 +30,7 @@ class Drawable d where
 -- | Stateful class contains initial and update functions. Any objects in your game, including the overrall world, will update according to events that occur
 class Stateful s where
   update :: Event -> s -> s
+  quit   :: s -> Bool
 
 -- | An Image which is converted into a `Texture`
 data Image = Image
@@ -84,12 +85,3 @@ instance Monoid Scene where
 -- | Convert a single `Image` into a `Scene`
 fromImage :: Image -> Scene
 fromImage = SingleScene . MImage
-
-
--- | GameState is a data type that encapsulates the entire state of the game, including the window. That way changes to resolution or other options can be properly accounted for in updates.
--- Of course, this means that the Stateful and Drawable instances for GameState must be defined by the user. (Note: Maybe a preprocessor macro could create default instances)
-data GameState s = GameState
-  { gameWindow     :: SDL.WindowConfig
-  , gameState      :: s
-  , gameShouldExit :: Bool
-  }
