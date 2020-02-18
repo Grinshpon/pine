@@ -1,15 +1,27 @@
 module Pine.Internal.Types where
 
-import qualified SDL (Event, Rectangle(..))
+import qualified SDL (Event, Rectangle(..), WindowConfig)
 import qualified SDL.Vect as SDLV
 import Foreign.C.Types (CInt)
 
 import Data.Semigroup
 
--- DeltaTime Double | KeyPress | KeyRelease | KeyState deriving (Eq, Show) --ideas
--- | placeholder
-data Event = DeltaTime Double | SDLEvent SDL.Event deriving (Eq, Show)
+data Event
+  = DeltaTime Double
+  | KeyPressed --Key
+  | KeyReleased --Key
+  | KeyState --(Key -> Bool)
+  | MousePosition (Double,Double)
+  | MouseClick MouseButton
+  | MouseScroll -- WIP
+  | WindowPosition
+  | WindowResized (Double,Double)
+  | WindowMinimized
+  | AudioState AudioState
+  | SDLEvent SDL.Event--(raw SDL data, shouldn't be used typically)
+  deriving (Eq, Show)
 
+data MouseButton = MouseLeft | MouseRight | MouseMiddle deriving (Eq, Show)
 
 -- | Drawable class contains the draw function, which takes a type and converts it into a `Scene`
 class Drawable d where
@@ -17,8 +29,7 @@ class Drawable d where
 
 -- | Stateful class contains initial and update functions. Any objects in your game, including the overrall world, will update according to events that occur
 class Stateful s where
-  initial :: s
-  update  :: Event -> s -> s
+  update :: Event -> s -> s
 
 -- | An Image which is converted into a `Texture`
 data Image = Image
@@ -73,3 +84,12 @@ instance Monoid Scene where
 -- | Convert a single `Image` into a `Scene`
 fromImage :: Image -> Scene
 fromImage = SingleScene . MImage
+
+
+-- | GameState is a data type that encapsulates the entire state of the game, including the window. That way changes to resolution or other options can be properly accounted for in updates.
+-- Of course, this means that the Stateful and Drawable instances for GameState must be defined by the user. (Note: Maybe a preprocessor macro could create default instances)
+data GameState s = GameState
+  { gameWindow     :: SDL.WindowConfig
+  , gameState      :: s
+  , gameShouldExit :: Bool
+  }

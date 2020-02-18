@@ -21,7 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/grin
 
 dependencies:
 - base >= 4.7 && < 5
-- sdl2 >= 2.4 && < 2.5
+- sdl2 >= 2.5
 - sdl2-image >= 0.1 && < 2.1
 - containers >= 0.6 && < 0.7
 - text >= 1.2.3 && < 1.3

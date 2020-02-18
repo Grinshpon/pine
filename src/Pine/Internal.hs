@@ -1,6 +1,6 @@
 module Pine.Internal
-  ( Pine.Internal.Renderer.defaultApp
-  , Pine.Internal.Renderer.pine
+  ( Pine.Internal.Renderer.pine
+  , Pine.Internal.Renderer.withDefaultConfig
   , module Pine.Internal.Types
   ) where
 

@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Pine.Internal.Renderer
-  ( defaultApp
-  , pine
+  ( pine
+  , withDefaultConfig
   ) where
 
 import Pine.Internal.Types
@@ -23,12 +24,11 @@ type TextureCache = Map FilePath SDL.Texture
 -- | This function initializes the window and takes an initial `Stateful` object that will be updated.
 pine :: (Stateful s, Drawable s)
      => Text -- ^ Title
-     -> SDL.WindowConfig -- ^ Window configuration
-     -> s -- ^ Initial state
+     -> GameState s -- ^ Window configuration and Initial state
      -> IO ()
-pine title windowConfig state_ = do
+pine title gs@GameState{..} = do
   SDL.initializeAll
-  window <- SDL.createWindow title windowConfig
+  window <- SDL.createWindow title gameWindow
   renderer <- SDL.createRenderer window (-1) $ SDL.RendererConfig
     { SDL.rendererType = SDL.AcceleratedRenderer
     , SDL.rendererTargetTexture = False
@@ -39,21 +39,21 @@ pine title windowConfig state_ = do
       updateQueue <- newTChanIO
       timer <- SDL.addTimer 16 (fpsTimer updateQueue)
       time <- SDL.ticks
-      SDL.pollEvent >>= go time updateQueue cache state_
+      SDL.pollEvent >>= go time updateQueue cache gs
       _ <- SDL.removeTimer timer
       pure ()
 
-    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> Maybe SDL.Event -> IO ()
-    go time updateQueue cache state mevent = do
+    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> GameState s -> Maybe SDL.Event -> IO ()
+    go time updateQueue cache state@GameState{..} mevent = do
       atomically $ readTChan updateQueue -- not ideal, events could get backed up
       time' <- SDL.ticks
       let dt = (fromIntegral (time' - time) :: Double) / 1000
       --print $ 1/dt
-      cache' <- drawScene cache $ draw state
+      cache' <- drawScene cache $ draw gameState
       case mevent of
         Nothing -> SDL.pollEvent >>= go time' updateQueue cache' (update (DeltaTime dt) state)
         Just ev -> case SDL.eventPayload ev of
-          SDL.WindowClosedEvent _ -> pure ()
+          SDL.WindowClosedEvent _ -> pure () -- replace with go ... CloseEvent
           _ -> SDL.pollEvent >>= go time' updateQueue cache' (update (SDLEvent ev) $ update (DeltaTime dt) state)
 
     fpsTimer :: TChan () -> Word32 -> IO SDL.RetriggerTimer
@@ -92,61 +92,17 @@ pine title windowConfig state_ = do
 
    in appLoop mempty
 
-{-
-quit :: Stateful a => a
-quit = unsafePerformIO $ exit *> pure initial
-
-or have a quit :: s defined in Stateful class, so wen state == quit then main loop can exit
--}
-
-data DefaultState = Logo Image
-
-instance Stateful DefaultState where
-  initial = Logo $ newImage "src/Media/logo.png" Nothing (Just $ rect 200 200 400 400)
-  update = const id
-
-instance Drawable DefaultState where
-  draw (Logo img) = fromImage img
-
--- | This simply opens a window with the Pine logo displayed
-defaultApp :: IO ()
-defaultApp = pine "Pine" defaultConfig (initial :: DefaultState)
+withDefaultConfig :: (Stateful s, Drawable s) => s -> GameState s
+withDefaultConfig s = GameState defaultConfig s False
   where
     defaultConfig = SDL.WindowConfig
       { SDL.windowBorder        = True
       , SDL.windowHighDPI       = False
       , SDL.windowInputGrabbed  = False
       , SDL.windowMode          = SDL.Windowed
-      , SDL.windowOpenGL        = Nothing
+      , SDL.windowGraphicsContext = SDL.NoGraphicsContext
       , SDL.windowPosition      = SDL.Wherever
       , SDL.windowResizable     = True
       , SDL.windowInitialSize   = SDL.V2 800 800
       , SDL.windowVisible       = True
       }
-
-{-
-  addEventWatch $ \ev ->
-    case eventPayload ev of
-      WindowSizeChangedEvent sizeChangeData ->
-        putStrLn $ "eventWatch windowSizeChanged: " ++ show sizeChangeData
-      KeyboardEvent kev ->
-        putStrLn "key event"
-      _ -> return ()
-  appLoop mempty
-    where
-      appLoop :: TextureCache -> IO ()
-      appLoop tc = pollEvent >>= go tc
-
-      go :: TextureCache -> Maybe Event -> IO ()
-      go tc = \case
-        Nothing -> pollEvent >>= go tc
-        Just ev -> case eventPayload ev of
-          KeyboardEvent keyboardEvent
-            |  keyboardEventKeyMotion keyboardEvent == Pressed &&
-               keysymKeycode (keyboardEventKeysym keyboardEvent) == KeycodeQ
-            -> return ()
-          _ -> pollEvent >>= go tc
-
-
-
--}

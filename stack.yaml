@@ -35,8 +35,8 @@ packages:
 # forks / in-progress versions pinned to a git hash. For example:
 #
 extra-deps:
-  - sdl2-2.4.1.0@sha256:65a2d222044676686859fda43f119cb0f02ab5d04718ee3a7331628dade69931,11265
-  - StateVar-1.1.1.1@sha256:cd3b516a49faf0627ea31885e012611e63600824976dcb276bcb2e92cdb0790f,1417
+# - sdl2-2.4.1.0@sha256:65a2d222044676686859fda43f119cb0f02ab5d04718ee3a7331628dade69931,11265
+# - StateVar-1.1.1.1@sha256:cd3b516a49faf0627ea31885e012611e63600824976dcb276bcb2e92cdb0790f,1417
 # - acme-missiles-0.3
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
