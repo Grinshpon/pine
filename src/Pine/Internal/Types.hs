@@ -9,6 +9,7 @@ import Control.Monad.State -- see below
 
 data Event
   = DeltaTime Double
+  | Load -- ^ very first event to be called
   | KeyPressed  SDL.Keycode
   | KeyReleased SDL.Keycode
   | KeyState --(Key -> Bool)
@@ -30,7 +31,7 @@ data MouseButton = MouseLeft | MouseRight | MouseMiddle deriving (Eq, Show)
 -- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
 type GameState s = State s Return
 
-data Return = Cont | Log String | Quit -- ...
+data Return = Cont | Log String | Quit | QuitWithLog String -- ...
 
 -- | Drawable class contains the draw function, which takes a type and converts it into a `Scene`
 class Drawable d where

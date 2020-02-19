@@ -41,7 +41,9 @@ pine title windowConfig state_ = do
       updateQueue <- newTChanIO
       timer <- SDL.addTimer 16 (fpsTimer updateQueue)
       time <- SDL.ticks
-      SDL.pollEvents >>= go time updateQueue cache state_
+      updateEvents [Load] state_ >>= \case
+        Right loadState -> SDL.pollEvents >>= go time updateQueue cache loadState
+        Left ()         -> pure ()
       _ <- SDL.removeTimer timer
       pure ()
 
@@ -53,8 +55,7 @@ pine title windowConfig state_ = do
       --print $ 1/dt
       cache' <- drawScene cache $ draw state
       let pineEvents = eventState sdlEvents
-      updatedState <- updateEvents ((DeltaTime dt):pineEvents) state
-      case updatedState of
+      updateEvents ((DeltaTime dt):pineEvents) state >>= \case
         Right newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
         Left ()        -> pure ()
       where
@@ -75,9 +76,10 @@ pine title windowConfig state_ = do
     updateEvents (e:es) state = do
       let (r, nState) = runState (update e) state
       case r of
-        Cont  -> updateEvents es nState
-        Log s -> putStrLn s *> updateEvents es nState
-        Quit  -> pure $ Left ()
+        Cont          -> updateEvents es nState
+        Log s         -> putStrLn s *> (updateEvents es nState)
+        QuitWithLog s -> putStrLn s *> (pure $ Left ())
+        Quit          -> pure $ Left ()
 
     fpsTimer :: TChan () -> Word32 -> IO SDL.RetriggerTimer
     fpsTimer updateQueue _ = do

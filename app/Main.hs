@@ -11,8 +11,9 @@ data DefaultState = Logo Image
 defaultInitial = Logo $ newImage "src/Media/logo.png" Nothing (Just $ rect 200 200 400 400)
 
 instance Stateful DefaultState where
+  update Load                      = return $ Log "Hello, Pine!"
   update WindowClose               = return Quit
-  update (KeyPressed SDL.KeycodeQ) = return Quit
+  update (KeyPressed SDL.KeycodeQ) = return $ QuitWithLog "Goodbye, Pine!"
   update _                         = return Cont
 
 instance Drawable DefaultState where
