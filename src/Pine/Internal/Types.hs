@@ -1,23 +1,25 @@
 module Pine.Internal.Types where
 
-import qualified SDL (Event, Rectangle(..), WindowConfig)
+import qualified SDL -- (Event, Rectangle(..), WindowConfig, Keycode(..))
 import qualified SDL.Vect as SDLV
 import Foreign.C.Types (CInt)
 
 import Data.Semigroup
+import Control.Monad.State -- see below
 
 data Event
   = DeltaTime Double
-  | KeyPressed --Key
-  | KeyReleased --Key
+  | KeyPressed  SDL.Keycode
+  | KeyReleased SDL.Keycode
   | KeyState --(Key -> Bool)
   | MousePosition (Double,Double)
   | MouseClick MouseButton
   | MouseScroll -- WIP
-  | WindowPosition
+  | WindowPosition (Double, Double)
   | WindowResized (Double,Double)
   | WindowMinimized
-  | AudioState AudioState
+--  | AudioState AudioState
+  | WindowClose
   | SDLEvent SDL.Event--(raw SDL data, shouldn't be used typically)
   deriving (Eq, Show)
 
@@ -56,7 +58,6 @@ newImage :: ()
          -> Maybe (SDL.Rectangle CInt) -> Image -- ^ The rendering target: The location of the image on the window and its size, or Nothing to take up the whole window.
 newImage = Image
 
-
 newtype Audio = Audio -- WIP
   { audiosrc :: FilePath
   } deriving (Eq, Show)
@@ -85,3 +86,18 @@ instance Monoid Scene where
 -- | Convert a single `Image` into a `Scene`
 fromImage :: Image -> Scene
 fromImage = SingleScene . MImage
+
+
+-- Most apps or games do not run forever, and sometimes people like to log things while building up a project.
+-- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
+-- This calls for a State Monad, but the side effect is it forces further complexity on the user, and so I have
+-- decided that it will not be implemented just yet, but rather in a later version of Pine.
+
+-- example:
+type GameState s = State s Return
+
+data Return = Log String | Quit -- ...
+
+foo :: Event -> GameState s
+foo (KeyPressed SDL.KeycodeQ) = return Quit
+-- foo (KeyPressed SDL.KeycodeQ) = state $ \state -> (Quit, state)

@@ -4,6 +4,7 @@ module Pine
   , withDefaultConfig
   , Drawable(..)
   , Stateful(..)
+  , GameState
   , Image(..)
   , newImage
   , rect

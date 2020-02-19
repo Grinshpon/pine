@@ -40,22 +40,32 @@ pine title windowConfig state_ = do
       updateQueue <- newTChanIO
       timer <- SDL.addTimer 16 (fpsTimer updateQueue)
       time <- SDL.ticks
-      SDL.pollEvent >>= go time updateQueue cache state_
+      SDL.pollEvents >>= go time updateQueue cache state_
       _ <- SDL.removeTimer timer
       pure ()
 
-    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> Maybe SDL.Event -> IO ()
-    go time updateQueue cache state mevent = do
+    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> [SDL.Event] -> IO ()
+    go time updateQueue cache state sdlEvents = do
       atomically $ readTChan updateQueue -- not ideal, events could get backed up
       time' <- SDL.ticks
       let dt = (fromIntegral (time' - time) :: Double) / 1000
       --print $ 1/dt
       cache' <- drawScene cache $ draw state
-      case mevent of
-        Nothing -> SDL.pollEvent >>= go time' updateQueue cache' (update (DeltaTime dt) state)
-        Just ev -> case SDL.eventPayload ev of
-          SDL.WindowClosedEvent _ -> if quit state then pure () else SDL.pollEvent >>= go time' updateQueue cache' (update (DeltaTime dt) state)
-          _ -> SDL.pollEvent >>= go time' updateQueue cache' (updateEvents [SDLEvent ev, DeltaTime dt] state)
+      case eventState sdlEvents of
+        Left () -> if quit state then pure () else SDL.pollEvents >>= go time' updateQueue cache' (update (DeltaTime dt) state)
+        Right pineEvents -> SDL.pollEvents >>= go time' updateQueue cache' (updateEvents ((DeltaTime dt):pineEvents) state)
+      where
+        eventState events =
+          case events of
+            [] -> Right []
+            (ev:evs) ->
+              case SDL.eventPayload ev of
+                SDL.WindowClosedEvent _ -> Left ()
+                SDL.KeyboardEvent keyboardEvent ->
+                  case SDL.keyboardEventKeyMotion keyboardEvent of
+                    SDL.Pressed  -> (<>) <$> (eventState evs) <*> (Right [KeyPressed  (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev])
+                    SDL.Released -> (<>) <$> (eventState evs) <*> (Right [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev])
+                _ -> (<>) <$> (eventState evs) <*> (Right [SDLEvent ev])
 
     updateEvents :: (Stateful s, Drawable s) => [Event] -> s -> s
     updateEvents [] state = state
