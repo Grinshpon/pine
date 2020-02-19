@@ -3,6 +3,7 @@
 module Main where
 
 import Pine
+import qualified SDL
 
 -- define the state of the game
 data DefaultState = Logo Image
@@ -10,8 +11,9 @@ data DefaultState = Logo Image
 defaultInitial = Logo $ newImage "src/Media/logo.png" Nothing (Just $ rect 200 200 400 400)
 
 instance Stateful DefaultState where
-  update = const id
-  quit   = const True
+  update WindowClose               = return Quit
+  update (KeyPressed SDL.KeycodeQ) = return Quit
+  update _                         = return Cont
 
 instance Drawable DefaultState where
   draw (Logo img) = fromImage img

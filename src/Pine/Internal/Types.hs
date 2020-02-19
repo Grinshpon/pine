@@ -25,14 +25,20 @@ data Event
 
 data MouseButton = MouseLeft | MouseRight | MouseMiddle deriving (Eq, Show)
 
+
+-- | Most apps or games do not run forever, and sometimes people like to log things while building up a project.
+-- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
+type GameState s = State s Return
+
+data Return = Cont | Log String | Quit -- ...
+
 -- | Drawable class contains the draw function, which takes a type and converts it into a `Scene`
 class Drawable d where
   draw :: d -> Scene
 
 -- | Stateful class contains initial and update functions. Any objects in your game, including the overrall world, will update according to events that occur
 class Stateful s where
-  update :: Event -> s -> s
-  quit   :: s -> Bool
+  update :: Event -> GameState s
 
 -- | An Image which is converted into a `Texture`
 data Image = Image
@@ -86,18 +92,3 @@ instance Monoid Scene where
 -- | Convert a single `Image` into a `Scene`
 fromImage :: Image -> Scene
 fromImage = SingleScene . MImage
-
-
--- Most apps or games do not run forever, and sometimes people like to log things while building up a project.
--- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
--- This calls for a State Monad, but the side effect is it forces further complexity on the user, and so I have
--- decided that it will not be implemented just yet, but rather in a later version of Pine.
-
--- example:
-type GameState s = State s Return
-
-data Return = Log String | Quit -- ...
-
-foo :: Event -> GameState s
-foo (KeyPressed SDL.KeycodeQ) = return Quit
--- foo (KeyPressed SDL.KeycodeQ) = state $ \state -> (Quit, state)

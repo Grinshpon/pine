@@ -5,6 +5,7 @@ module Pine
   , Drawable(..)
   , Stateful(..)
   , GameState
+  , Return(..)
   , Image(..)
   , newImage
   , rect

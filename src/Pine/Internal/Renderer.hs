@@ -17,6 +17,7 @@ import Data.Text (Text)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Control.Monad
+import Control.Monad.State
 import Data.Word (Word32)
 
 type TextureCache = Map FilePath SDL.Texture
@@ -51,25 +52,32 @@ pine title windowConfig state_ = do
       let dt = (fromIntegral (time' - time) :: Double) / 1000
       --print $ 1/dt
       cache' <- drawScene cache $ draw state
-      case eventState sdlEvents of
-        Left () -> if quit state then pure () else SDL.pollEvents >>= go time' updateQueue cache' (update (DeltaTime dt) state)
-        Right pineEvents -> SDL.pollEvents >>= go time' updateQueue cache' (updateEvents ((DeltaTime dt):pineEvents) state)
+      let pineEvents = eventState sdlEvents
+      updatedState <- updateEvents ((DeltaTime dt):pineEvents) state
+      case updatedState of
+        Right newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
+        Left ()        -> pure ()
       where
         eventState events =
           case events of
-            [] -> Right []
+            [] -> []
             (ev:evs) ->
               case SDL.eventPayload ev of
-                SDL.WindowClosedEvent _ -> Left ()
+                SDL.WindowClosedEvent _ -> [WindowClose] <> (eventState evs)
                 SDL.KeyboardEvent keyboardEvent ->
                   case SDL.keyboardEventKeyMotion keyboardEvent of
-                    SDL.Pressed  -> (<>) <$> (eventState evs) <*> (Right [KeyPressed  (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev])
-                    SDL.Released -> (<>) <$> (eventState evs) <*> (Right [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev])
-                _ -> (<>) <$> (eventState evs) <*> (Right [SDLEvent ev])
+                    SDL.Pressed  -> (eventState evs) <> [KeyPressed  (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev]
+                    SDL.Released -> (eventState evs) <> [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev]
+                _ -> (eventState evs) <> [SDLEvent ev]
 
-    updateEvents :: (Stateful s, Drawable s) => [Event] -> s -> s
-    updateEvents [] state = state
-    updateEvents (e:es) state = updateEvents es $ update e state
+    updateEvents :: (Stateful s, Drawable s) => [Event] -> s -> IO (Either () s)
+    updateEvents [] state = pure $ Right state
+    updateEvents (e:es) state = do
+      let (r, nState) = runState (update e) state
+      case r of
+        Cont  -> updateEvents es nState
+        Log s -> putStrLn s *> updateEvents es nState
+        Quit  -> pure $ Left ()
 
     fpsTimer :: TChan () -> Word32 -> IO SDL.RetriggerTimer
     fpsTimer updateQueue _ = do
