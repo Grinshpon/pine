@@ -19,8 +19,6 @@ instance Drawable DefaultState where
   draw (Logo img) = fromImage img
 
 -- | This simply opens a window with the Pine logo displayed
-defaultApp :: IO ()
-defaultApp = pine "Pine" withDefaultConfig defaultInitial
-
 main :: IO ()
-main = defaultApp
+main = pine "Pine" withDefaultConfig defaultInitial
+
