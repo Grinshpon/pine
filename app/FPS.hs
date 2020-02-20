@@ -29,9 +29,7 @@ instance Stateful App where
     appState <- get
     let (count,accum) = frames appState
     return $ QuitWithLog $ "Average FPS: " <> show (1 / (accum / fromIntegral count))
-  update dt Step = do
-    inc dt
-    return Cont
+  update dt Step                     = inc dt
   update _ _                         = return Cont
 
 instance Drawable App where
