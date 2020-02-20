@@ -43,8 +43,8 @@ pine title windowConfig state_ = do
       timer <- SDL.addTimer 16 (fpsTimer updateQueue)
       time <- SDL.ticks
       dcache <- updateEvents (fromIntegral time / 1000) [Load] state_ >>= \case
-        Right loadState -> SDL.pollEvents >>= go time updateQueue cache loadState
-        Left ()         -> pure cache
+        Just loadState -> SDL.pollEvents >>= go time updateQueue cache loadState
+        Nothing        -> pure cache
       _ <- SDL.removeTimer timer
       foldMap SDL.destroyTexture dcache
       SDL.destroyRenderer renderer
@@ -59,8 +59,8 @@ pine title windowConfig state_ = do
       cache' <- drawScene cache $ draw state
       let pineEvents = eventState sdlEvents
       updateEvents dt (Step:pineEvents) state >>= \case
-        Right newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
-        Left ()        -> pure cache
+        Just newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
+        Nothing       -> pure cache'
       where
         eventState events =
           case events of
@@ -74,15 +74,15 @@ pine title windowConfig state_ = do
                     SDL.Released -> (eventState evs) <> [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev]
                 _ -> (eventState evs) <> [SDLEvent ev]
 
-    updateEvents :: (Stateful s, Drawable s) => DeltaTime -> [Event] -> s -> IO (Either () s)
-    updateEvents _  []     state = pure $ Right state
+    updateEvents :: (Stateful s, Drawable s) => DeltaTime -> [Event] -> s -> IO (Maybe s)
+    updateEvents _  []     state = pure $ Just state
     updateEvents dt (e:es) state = do
       let (r, nState) = runState (update dt e) state
       case r of
         Cont          -> updateEvents dt es nState
         Log s         -> putStrLn s *> (updateEvents dt es nState)
-        QuitWithLog s -> putStrLn s *> (pure $ Left ())
-        Quit          -> pure $ Left ()
+        QuitWithLog s -> putStrLn s *> (pure $ Nothing)
+        Quit          -> pure $ Nothing
 
     fpsTimer :: TChan () -> Word32 -> IO SDL.RetriggerTimer
     fpsTimer updateQueue _ = do
