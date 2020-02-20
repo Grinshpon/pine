@@ -2,9 +2,10 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Pine.Internal.Renderer -- rename since this module is not just renderer, but establishes main game loop
+module Pine.Internal.Pine
   ( pine
   , withDefaultConfig
+  , with
   ) where
 
 import Pine.Internal.Types
@@ -41,13 +42,15 @@ pine title windowConfig state_ = do
       updateQueue <- newTChanIO
       timer <- SDL.addTimer 16 (fpsTimer updateQueue)
       time <- SDL.ticks
-      updateEvents [Load] state_ >>= \case
+      dcache <- updateEvents (fromIntegral time / 1000) [Load] state_ >>= \case
         Right loadState -> SDL.pollEvents >>= go time updateQueue cache loadState
-        Left ()         -> pure ()
+        Left ()         -> pure cache
       _ <- SDL.removeTimer timer
-      pure ()
+      foldMap SDL.destroyTexture dcache
+      SDL.destroyRenderer renderer
+      SDL.destroyWindow window
 
-    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> [SDL.Event] -> IO ()
+    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> [SDL.Event] -> IO TextureCache
     go time updateQueue cache state sdlEvents = do
       atomically $ readTChan updateQueue -- not ideal, events could get backed up
       time' <- SDL.ticks
@@ -55,9 +58,9 @@ pine title windowConfig state_ = do
       --print $ 1/dt
       cache' <- drawScene cache $ draw state
       let pineEvents = eventState sdlEvents
-      updateEvents ((DeltaTime dt):pineEvents) state >>= \case
+      updateEvents dt (Step:pineEvents) state >>= \case
         Right newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
-        Left ()        -> pure ()
+        Left ()        -> pure cache
       where
         eventState events =
           case events of
@@ -71,13 +74,13 @@ pine title windowConfig state_ = do
                     SDL.Released -> (eventState evs) <> [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev]
                 _ -> (eventState evs) <> [SDLEvent ev]
 
-    updateEvents :: (Stateful s, Drawable s) => [Event] -> s -> IO (Either () s)
-    updateEvents [] state = pure $ Right state
-    updateEvents (e:es) state = do
-      let (r, nState) = runState (update e) state
+    updateEvents :: (Stateful s, Drawable s) => DeltaTime -> [Event] -> s -> IO (Either () s)
+    updateEvents _  []     state = pure $ Right state
+    updateEvents dt (e:es) state = do
+      let (r, nState) = runState (update dt e) state
       case r of
-        Cont          -> updateEvents es nState
-        Log s         -> putStrLn s *> (updateEvents es nState)
+        Cont          -> updateEvents dt es nState
+        Log s         -> putStrLn s *> (updateEvents dt es nState)
         QuitWithLog s -> putStrLn s *> (pure $ Left ())
         Quit          -> pure $ Left ()
 
@@ -128,3 +131,6 @@ withDefaultConfig = SDL.WindowConfig
   , SDL.windowInitialSize   = SDL.V2 800 800
   , SDL.windowVisible       = True
   }
+
+with :: (MonadState s m) => (s -> (a,s)) -> m a
+with = state

@@ -8,8 +8,8 @@ import Data.Semigroup
 import Control.Monad.State -- see below
 
 data Event
-  = DeltaTime Double
-  | Load -- ^ very first event to be called
+  = Load -- ^ very first event to be called
+  | Step -- ^ Other events may be called multiple times per frame, but the Step event occurs once per frame
   | KeyPressed  SDL.Keycode
   | KeyReleased SDL.Keycode
   | KeyState --(Key -> Bool)
@@ -29,7 +29,7 @@ data MouseButton = MouseLeft | MouseRight | MouseMiddle deriving (Eq, Show)
 
 -- | Most apps or games do not run forever, and sometimes people like to log things while building up a project.
 -- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
-type GameState s = State s Return
+type PineState s = State s Return
 
 data Return = Cont | Log String | Quit | QuitWithLog String -- ...
 
@@ -37,9 +37,11 @@ data Return = Cont | Log String | Quit | QuitWithLog String -- ...
 class Drawable d where
   draw :: d -> Scene
 
+type DeltaTime = Double
+
 -- | Stateful class contains initial and update functions. Any objects in your game, including the overrall world, will update according to events that occur
 class Stateful s where
-  update :: Event -> GameState s
+  update :: DeltaTime -> Event -> PineState s
 
 -- | An Image which is converted into a `Texture`
 data Image = Image

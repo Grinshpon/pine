@@ -2,9 +2,10 @@
 module Pine
   ( pine
   , withDefaultConfig
+  , with
   , Drawable(..)
   , Stateful(..)
-  , GameState
+  , PineState
   , Return(..)
   , Image(..)
   , newImage
@@ -12,6 +13,7 @@ module Pine
   , Scene
   , fromImage
   , Event(..)
+  , DeltaTime
   ) where
 
 import Pine.Internal
