@@ -57,6 +57,9 @@ pine title windowConfig state_ = do
       let dt = (fromIntegral (time' - time) :: Double) / 1000
       --print $ 1/dt
       cache' <- drawScene cache $ draw state
+--      mousePos <- SDL.getModalMouseLocation >>= \case  --waiting for PR to be merged on sdl2
+--        SDL.AbsoluteModalLocation (SDL.P pos) -> pos
+--        SDL.RelativeModalLocation pos -> pos
       let pineEvents = eventState sdlEvents
       updateEvents dt (Step:pineEvents) state >>= \case
         Just newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
@@ -66,13 +69,14 @@ pine title windowConfig state_ = do
           case events of
             [] -> []
             (ev:evs) ->
-              case SDL.eventPayload ev of
+              [SDLEvent ev] <> case SDL.eventPayload ev of
                 SDL.WindowClosedEvent _ -> [WindowClose] <> (eventState evs)
                 SDL.KeyboardEvent keyboardEvent ->
                   case SDL.keyboardEventKeyMotion keyboardEvent of
-                    SDL.Pressed  -> (eventState evs) <> [KeyPressed  (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev]
-                    SDL.Released -> (eventState evs) <> [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent)), SDLEvent ev]
-                _ -> (eventState evs) <> [SDLEvent ev]
+                    SDL.Pressed  -> [KeyPressed  (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent))] <> (eventState evs)
+                    SDL.Released -> [KeyReleased (SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent))] <> (eventState evs)
+                SDL.MouseMotionEvent mmeData -> [MouseMoved (SDL.mouseMotionEventRelMotion mmeData)] <> (eventState evs) -- maybe include new position as well
+                _ -> (eventState evs)
 
     updateEvents :: (Stateful s, Drawable s) => DeltaTime -> [Event] -> s -> IO (Maybe s)
     updateEvents _  []     state = pure $ Just state

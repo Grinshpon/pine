@@ -3,6 +3,8 @@ module Pine.Internal.Types where
 import qualified SDL -- (Event, Rectangle(..), WindowConfig, Keycode(..))
 import qualified SDL.Vect as SDLV
 import Foreign.C.Types (CInt)
+import Data.Int (Int32)
+import Linear (V2)
 
 import Data.Semigroup
 import Control.Monad.State -- see below
@@ -13,7 +15,8 @@ data Event
   | KeyPressed  SDL.Keycode
   | KeyReleased SDL.Keycode
   | KeyState --(Key -> Bool)
-  | MousePosition (Double,Double)
+  | MousePosition (V2 Int32)
+  | MouseMoved (V2 Int32)
   | MouseClick MouseButton
   | MouseScroll -- WIP
   | WindowPosition (Double, Double)
@@ -31,7 +34,7 @@ data MouseButton = MouseLeft | MouseRight | MouseMiddle deriving (Eq, Show)
 -- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
 type PineState s = State s Return
 
-data Return = Cont | Log String | Quit | QuitWithLog String -- ...
+data Return = Cont | Log String | Quit | QuitWithLog String -- change config settings (like resize window), show/hide mouse
 
 -- | Drawable class contains the draw function, which takes a type and converts it into a `Scene`
 class Drawable d where
