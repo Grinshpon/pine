@@ -7,6 +7,7 @@ module Pine
   , Stateful(..)
   , PineState
   , Return(..)
+  , cont,quit,contLog,quitLog
   , Image(..)
   , newImage
   , rect

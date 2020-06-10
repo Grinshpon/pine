@@ -24,13 +24,13 @@ inc dt =
     in (Cont, state {frames = (count+1, accum+dt)})
 
 instance Stateful App where
-  update _ WindowClose               = return Quit
+  update _ WindowClose               = quit
   update _ (KeyPressed SDL.KeycodeQ) = do
     appState <- get
     let (count,accum) = frames appState
-    return $ QuitWithLog $ "Average FPS: " <> show (1 / (accum / fromIntegral count))
+    quitLog $ "Average FPS: " <> show (1 / (accum / fromIntegral count))
   update dt Step                     = inc dt
-  update _ _                         = return Cont
+  update _ _                         = cont
 
 instance Drawable App where
   draw = fromImage . logo

@@ -43,15 +43,15 @@ pine title windowConfig state_ = do
       timer <- SDL.addTimer 16 (fpsTimer updateQueue)
       time <- SDL.ticks
       dcache <- updateEvents (fromIntegral time / 1000) [Load] state_ >>= \case
-        Just loadState -> SDL.pollEvents >>= go time updateQueue cache loadState
+        Just loadState -> SDL.pollEvents >>= appStep time updateQueue cache loadState
         Nothing        -> pure cache
       _ <- SDL.removeTimer timer
       foldMap SDL.destroyTexture dcache
       SDL.destroyRenderer renderer
       SDL.destroyWindow window
 
-    go :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> [SDL.Event] -> IO TextureCache
-    go time updateQueue cache state sdlEvents = do
+    appStep :: (Stateful s, Drawable s) => Word32 -> TChan () -> TextureCache -> s -> [SDL.Event] -> IO TextureCache
+    appStep time updateQueue cache state sdlEvents = do
       atomically $ readTChan updateQueue -- not ideal, events could get backed up
       time' <- SDL.ticks
       let dt = (fromIntegral (time' - time) :: Double) / 1000
@@ -62,7 +62,7 @@ pine title windowConfig state_ = do
 --        SDL.RelativeModalLocation pos -> pos
       let pineEvents = eventState sdlEvents
       updateEvents dt (Step:pineEvents) state >>= \case
-        Just newState -> SDL.pollEvents >>= go time' updateQueue cache' newState
+        Just newState -> SDL.pollEvents >>= appStep time' updateQueue cache' newState
         Nothing       -> pure cache'
       where
         eventState events =

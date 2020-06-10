@@ -29,12 +29,20 @@ data Event
 
 data MouseButton = MouseLeft | MouseRight | MouseMiddle deriving (Eq, Show)
 
+data Return = Cont | Log String | Quit | QuitWithLog String -- change config settings (like resize window), show/hide mouse
 
 -- | Most apps or games do not run forever, and sometimes people like to log things while building up a project.
 -- In order for the user of this framework to do that, they must be able to send values back to the main control loop.
 type PineState s = State s Return
 
-data Return = Cont | Log String | Quit | QuitWithLog String -- change config settings (like resize window), show/hide mouse
+cont,quit :: PineState s
+cont = pure Cont
+quit = pure Quit
+
+contLog,quitLog :: String -> PineState s
+contLog s = pure $ Log s
+quitLog s = pure $ QuitWithLog s
+
 
 -- | Drawable class contains the draw function, which takes a type and converts it into a `Scene`
 class Drawable d where
